@@ -1,0 +1,3 @@
+#!/bin/bash
+
+emcc main.c -o main.html -Wall -Wextra -lm -lGL -lglfw -lGLEW -idirafter/usr/include/ -s USE_GLFW=3 --embed-file vertex.glsl --embed-file fragment.glsl --embed-file output_model

@@ -1,0 +1,2 @@
+#!/bin/bash
+gcc -o main main.c -Wall -Werror -Wextra -lGL -lglfw -lm -lGLEW -lassimp -fsanitize=address -g

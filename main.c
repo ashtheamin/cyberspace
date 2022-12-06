@@ -25,6 +25,8 @@ struct attributes {
     GLint fragment_position;
     GLint vertex_color;
     GLint fragment_color;
+    GLint vertex_normal;
+    GLint fragment_normal;
 };
 
 // Shader uniforms
@@ -73,7 +75,8 @@ struct light {
 // Vertex data
 struct vertex {
     vec3 position;
-    vec3 vertex_color;
+    vec4 vertex_color;
+    vec3 normal;
 };
 
 // A shader program struct.
@@ -120,6 +123,7 @@ struct program {
     struct light light;
     struct shader* shaders;
     GLuint shader;
+    bool opengl_initialised;
 };
 
 // A pointer to the globla state on the heap.
@@ -328,16 +332,20 @@ struct object* object_new(char* object_filename) {
     while (fgets(buffer, 4096, obj_file) != NULL) {
         // Load vertex positions and colors
         if (buffer[0] == 'v' && buffer[1] == ' ') {
-            sscanf(buffer, "v %f %f %f %f %f %f", 
+            sscanf(buffer, "v %f %f %f %f %f %f %f %f %f %f", 
             &mesh->vertices[vertices_index].position[0],
             &mesh->vertices[vertices_index].position[1],
             &mesh->vertices[vertices_index].position[2],
             &mesh->vertices[vertices_index].vertex_color[0],
             &mesh->vertices[vertices_index].vertex_color[1],
-            &mesh->vertices[vertices_index].vertex_color[2]);
+            &mesh->vertices[vertices_index].vertex_color[2],
+            &mesh->vertices[vertices_index].vertex_color[3],
+            &mesh->vertices[vertices_index].normal[0],
+            &mesh->vertices[vertices_index].normal[1],
+            &mesh->vertices[vertices_index].normal[2]);
             vertices_index++;
         }
-        
+
         // Load list of faces
         if (buffer[0] == 'f') {
             sscanf(buffer, "f %hd", &mesh->indices[indices_index]);
@@ -367,7 +375,11 @@ struct object* object_new(char* object_filename) {
 
         // Load the vertex colors into GPU and into the colors attribute
         glEnableVertexAttribArray(program->shaders->attributes.vertex_color);
-        glVertexAttribPointer(program->shaders->attributes.vertex_color, 3, GL_FLOAT, GL_FALSE, sizeof(struct vertex), (void*)offsetof(struct vertex, vertex_color));
+        glVertexAttribPointer(program->shaders->attributes.vertex_color, 4, GL_FLOAT, GL_FALSE, sizeof(struct vertex), (void*)offsetof(struct vertex, vertex_color));
+
+        // Load the vertex normals into GPU and into the colors attribute
+        glEnableVertexAttribArray(program->shaders->attributes.vertex_normal);
+        glVertexAttribPointer(program->shaders->attributes.vertex_normal, 3, GL_FLOAT, GL_FALSE, sizeof(struct vertex), (void*)offsetof(struct vertex, normal));
         
         // Load the indices to form the triangle faces.
         glGenBuffers(1, &mesh->EBO);
@@ -505,6 +517,8 @@ void program_init() {
     program->shaders->attributes.fragment_position = glGetAttribLocation(program->shaders->shader, "fragment_position");
     program->shaders->attributes.vertex_color = glGetAttribLocation(program->shaders->shader, "vertex_color");
     program->shaders->attributes.fragment_color = glGetAttribLocation(program->shaders->shader, "fragment_color");
+    program->shaders->attributes.vertex_normal = glGetAttribLocation(program->shaders->shader, "vertex_normal");
+    program->shaders->attributes.fragment_normal = glGetAttribLocation(program->shaders->shader, "fragment_normal");
 
     // Initialise uniforms:
     program->shaders->uniforms.view = glGetUniformLocation(program->shaders->shader, "view");
@@ -527,12 +541,12 @@ void program_init() {
     }
 
     // Initialise camera:
-    memcpy(program->camera.position, (vec3){0.0, 5.0, 10.0}, sizeof(vec3));
+    memcpy(program->camera.position, (vec3){-2.0, -13.0, 10.0}, sizeof(vec3));
     memcpy(program->camera.front, (vec3){0.0, 0.0, -1.0}, sizeof(vec3));
     memcpy(program->camera.up, (vec3){0.0, 1.0, 0.0}, sizeof(vec3));
     program->camera.yaw = -90.0;
     program->camera.pitch = 0.0;
-    program->camera.speed = 40;
+    program->camera.speed = 5;
 
     program->camera.mouse.last_x = SCREEN_WIDTH/2;
     program->camera.mouse.last_y = SCREEN_HEIGHT/2;
@@ -545,6 +559,7 @@ void program_init() {
 
     // Set program status:
     program->status = RUNNING;
+    program->opengl_initialised = false;
 
     // Set resize callback:
     glfwSetFramebufferSizeCallback(program->window, program_resize_callback);
@@ -556,15 +571,21 @@ void program_init() {
 
 // Render the objects in the program.
 void program_render() {
-    // Initialise OpenGL elements.
-    glClearColor(0.052, 0.080, 0.092, 0.0);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_FRAMEBUFFER_SRGB);
+    // Initialise OpenGL elements
+    if (program->opengl_initialised == false) {
+        glClearColor(0.52, 0.80, 0.92, 0.0);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glCullFace(GL_BACK);
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        // Load program shader
+        glUseProgram(program->shaders->shader);
+        program->opengl_initialised = true;
+    }
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-    // Load program shader
-    glUseProgram(program->shaders->shader);
-    
     // Go through the list of objects to render
     struct object* object = program->objects;
     while (object != NULL) {

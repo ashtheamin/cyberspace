@@ -9,7 +9,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <cglm/cglm.h>
 
 // Load the mesh from the scene nodes
 void object_load_mesh(FILE* output_file, struct aiMesh* mesh) {
@@ -21,9 +20,18 @@ void object_load_mesh(FILE* output_file, struct aiMesh* mesh) {
 
         // Copy the vertex colours and print them to the new model file
         if (mesh->mColors[0] != NULL) {
-            fprintf(output_file, " %f %f %f\n", mesh->mColors[0][i].r, mesh->mColors[0][i].g, mesh->mColors[0][i].b);
+            fprintf(output_file, " %f %f %f %f", mesh->mColors[0][i].r, mesh->mColors[0][i].g, mesh->mColors[0][i].b, mesh->mColors[0][i].a);
         }
         else {
+            fprintf(output_file, " %f %f %f %f", 0.0, 0.0, 0.0, 1.0);
+        }
+
+        // Copy the vertex normals and print them to the new model file
+        if (mesh->mNormals != NULL) {
+            fprintf(output_file, " %f %f %f\n", mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+        }
+        else {
+            printf("No normal found\n");
             fprintf(output_file, " %f %f %f\n", 0.0, 0.0, 0.0);
         }
     }
@@ -59,7 +67,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Open the model file and scene and calculate the filesize:
-    const struct aiScene* scene = aiImportFile(argv[1], aiProcess_CalcTangentSpace|aiProcess_Triangulate|aiProcess_JoinIdenticalVertices|aiProcess_SortByPType|aiProcess_GenUVCoords);
+    const struct aiScene* scene = aiImportFile(argv[1], aiProcess_CalcTangentSpace|aiProcess_Triangulate|aiProcess_JoinIdenticalVertices|aiProcess_SortByPType|aiProcess_GenUVCoords|aiProcess_GenNormals);
     if (scene == NULL) {
         printf("object_new(): Failed to import model. Error: %s. Exiting.\n", aiGetErrorString());
         return -1;

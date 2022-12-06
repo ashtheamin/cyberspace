@@ -1,0 +1,2 @@
+#!/bin/bash
+gcc export_model_to_web.c -o export_model_to_web -lassimp -Wall -Werror -Wextra

@@ -1,2 +1,2 @@
 #!/bin/bash
-gcc export_model_to_web.c -o export_model_to_web -lassimp -Wall -Werror -Wextra
+gcc object_converter_tool.c -o object_converter_tool -lassimp -Wall -Werror -Wextra

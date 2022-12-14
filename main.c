@@ -541,12 +541,12 @@ void program_init() {
     }
 
     // Initialise camera:
-    memcpy(program->camera.position, (vec3){-2.0, -13.0, 10.0}, sizeof(vec3));
+    memcpy(program->camera.position, (vec3){180.0, -15.0, -64.0}, sizeof(vec3));
     memcpy(program->camera.front, (vec3){0.0, 0.0, -1.0}, sizeof(vec3));
     memcpy(program->camera.up, (vec3){0.0, 1.0, 0.0}, sizeof(vec3));
     program->camera.yaw = -90.0;
     program->camera.pitch = 0.0;
-    program->camera.speed = 5;
+    program->camera.speed = 250;
 
     program->camera.mouse.last_x = SCREEN_WIDTH/2;
     program->camera.mouse.last_y = SCREEN_HEIGHT/2;
@@ -567,6 +567,14 @@ void program_init() {
     // Set mouse callback:
     glfwSetCursorPosCallback(program->window, program_mouse_callback);
     glfwSetInputMode(program->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // Rotate camera:
+    program->camera.yaw += -120.0;
+    vec3 direction = {0.0, 0.0, 0.0};
+    direction[0] = cos(glm_rad(program->camera.yaw)) * cos(glm_rad(program->camera.pitch));
+    direction[1] = sin(glm_rad(program->camera.pitch));
+    direction[2] = sin(glm_rad(program->camera.yaw)) * cos(glm_rad(program->camera.pitch));
+    glm_vec3_normalize_to(direction, program->camera.front);
 }
 
 // Render the objects in the program.
@@ -612,7 +620,7 @@ void program_render() {
         glm_vec3_copy((vec3){0.0, 1000.0, 1000.0}, program->light.light_position);
 
         // Create the camera perspective
-        glm_perspective(glm_rad(45.0f), (float)SCREEN_WIDTH/(float)SCREEN_HEIGHT, 0.1f, 1000.f, projection);
+        glm_perspective(glm_rad(45.0f), (float)SCREEN_WIDTH/(float)SCREEN_HEIGHT, 0.1f, 1000000.f, projection);
         
         // Copy information on light, camera position and uniforms to the shader
         // Also copy transformation matricies for vertex positions to the shader for processing.
@@ -648,6 +656,43 @@ void program_update_timing() {
 
 // Updates the camera's position in a direction based on what key is hit to move it and the speed it should move at
 void program_input() {
+    // Change camera speed:
+    if (glfwGetKey(program->window, GLFW_KEY_1) == GLFW_PRESS) {
+        program->camera.speed = 20;
+    }
+
+    if (glfwGetKey(program->window, GLFW_KEY_2) == GLFW_PRESS) {
+        program->camera.speed = 50;
+    }
+
+    if (glfwGetKey(program->window, GLFW_KEY_3) == GLFW_PRESS) {
+        program->camera.speed = 250;
+    }
+
+    if (glfwGetKey(program->window, GLFW_KEY_4) == GLFW_PRESS) {
+        program->camera.speed = 1000;
+    }
+
+    if (glfwGetKey(program->window, GLFW_KEY_5) == GLFW_PRESS) {
+        program->camera.speed = 10000;
+    }
+
+    if (glfwGetKey(program->window, GLFW_KEY_6) == GLFW_PRESS) {
+        program->camera.speed = 100000;
+    }
+
+    if (glfwGetKey(program->window, GLFW_KEY_7) == GLFW_PRESS) {
+        program->camera.speed = 100000;
+    }
+
+    if (glfwGetKey(program->window, GLFW_KEY_8) == GLFW_PRESS) {
+        program->camera.speed = 1000000;
+    }
+
+    if (glfwGetKey(program->window, GLFW_KEY_9) == GLFW_PRESS) {
+        program->camera.speed = 1000000;
+    }
+
     float speed = program->camera.speed * program->timing.delta_time;
     vec3 updated_position = {0.0, 0.0, 0.0};
 

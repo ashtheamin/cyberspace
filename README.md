@@ -1,7 +1,7 @@
 # Cyberspace
 A 3D renderer written in C using OpenGL and GLFW, ported to tbe web and capable of running natively.
 
-[Click here to access a live demo!](https://ashtheamin.github.io/
+[Click here to access a live demo!](https://ashtheamin.github.io/)
 ![https://ashtheamin.github.io/](screenshot.png)
 
 How this program works:
